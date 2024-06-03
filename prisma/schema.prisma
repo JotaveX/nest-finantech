@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model revenue {
+  idRevenue         Int                 @id @unique(map: "idRevenue_UNIQUE") @default(autoincrement())
+  value             Float               @db.Float
+  isWaste           Int                 @db.TinyInt
+  reason            String              @db.VarChar(66)
+  description       String?             @db.VarChar(132)
+  scheduled_revenue scheduled_revenue[]
+  wallet            wallet[]
+}
+
+model scheduled_revenue {
+  id                Int      @id @default(autoincrement()) @map("id")
+  date              Int
+  period            Int
+  Revenue_idRevenue Int
+  revenue           revenue  @relation(fields: [Revenue_idRevenue], references: [idRevenue], onDelete: NoAction, onUpdate: NoAction, map: "fk_scheduled-revenue_Revenue1")
+  wallet            wallet[]
+
+  @@index([Revenue_idRevenue], map: "fk_scheduled-revenue_Revenue1_idx")
+  @@map("scheduled-revenue")
+}
+
+model user {
+  id        Int      @id @unique(map: "id_UNIQUE") @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @unique(map: "email_UNIQUE") @db.VarChar(132)
+  password  String   @db.VarChar(60)
+  birth     DateTime @db.Date
+  Wallet_id Int
+  wallet    wallet   @relation(fields: [Wallet_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_User_Wallet")
+
+  @@index([Wallet_id], map: "fk_User_Wallet_idx")
+}
+
+model wallet {
+  id                                    Int                @id @unique @default(autoincrement())
+  Revenue_id                            Int?
+  scheduled_revenue_idScheduled_revenue Int?               @map("scheduled-revenue_idScheduled-revenue")
+  total                                 Float              @default(0) @db.Float
+  user                                  user[]
+  revenue                               revenue?           @relation(fields: [Revenue_id], references: [idRevenue], onDelete: NoAction, onUpdate: NoAction, map: "fk_Wallet_Revenue1")
+  scheduled_revenue                     scheduled_revenue? @relation(fields: [scheduled_revenue_idScheduled_revenue], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_Wallet_scheduled-revenue1")
+
+  @@index([Revenue_id], map: "fk_Wallet_Revenue1_idx")
+  @@index([scheduled_revenue_idScheduled_revenue], map: "fk_Wallet_scheduled-revenue1_idx")
+}
